@@ -108,6 +108,8 @@ def find_homography_ransac(list_pairs_matched_keypoints):
 
     return best_H
 def extract_and_match_feature(img_1, img_2):
+    print("\nextract SIFT feature from input image and reference image")
+
     gray_1 = cv2.cvtColor(img_1, cv2.COLOR_BGR2GRAY)
     gray_2 = cv2.cvtColor(img_2, cv2.COLOR_BGR2GRAY)
     sift = cv2.xfeatures2d.SIFT_create()
@@ -148,7 +150,16 @@ def warp_image(img_1, H_1, img_2):
 
     return result
 
+def drawKeypoints(img_1, img_2, gray_1, gray_2, kp_1, kp_2):
+    kp_sift_1 = cv2.drawKeypoints(gray_1, kp_1, img_1)
+    kp_sift_2 = cv2.drawKeypoints(gray_2, kp_2, img_2)
+
+    cv2.imwrite("output/kp/kp_1.png", kp_sift_1)
+    cv2.imwrite("output/kp/kp_2.png", kp_sift_2)
+
 def align_orb_homo(img_1, img_2):
+    print("\nextract ORB feature from input image and reference image")
+
     # image to gray
     gray_1 = cv2.cvtColor(img_1, cv2.COLOR_BGR2GRAY)
     gray_2 = cv2.cvtColor(img_2, cv2.COLOR_BGR2GRAY)
@@ -157,6 +168,8 @@ def align_orb_homo(img_1, img_2):
     orb = cv2.ORB_create(MAX_FEATURES)
     kp_1, des_1 = orb.detectAndCompute(gray_1, None)
     kp_2, des_2 = orb.detectAndCompute(gray_2, None)
+
+    # drawKeypoints(img_1, img_2, gray_1, gray_2, kp_1, kp_2)
 
     # find matches
     match_list = cv2.DescriptorMatcher_create(cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
@@ -168,6 +181,8 @@ def align_orb_homo(img_1, img_2):
     # keep good matches
     good = int(len(matches) * RATIO_ROBUSTNESS)
     matches = matches[:good]
+
+    print("length of matched points:", len(matches))
 
     # draw matches
     image = cv2.drawMatches(img_1, kp_1, img_2, kp_2, matches, None)
@@ -193,6 +208,8 @@ def align_orb_homo(img_1, img_2):
     return result
 
 def align_sift_homo(img_1, img_2):
+    print("\nextract SIFT feature from input image and reference image")
+
     # image to gray
     gray_1 = cv2.cvtColor(img_1, cv2.COLOR_BGR2GRAY)
     gray_2 = cv2.cvtColor(img_2, cv2.COLOR_BGR2GRAY)
@@ -201,6 +218,8 @@ def align_sift_homo(img_1, img_2):
     sift = cv2.xfeatures2d.SIFT_create()
     kp_1, des_1 = sift.detectAndCompute(gray_1, None)
     kp_2, des_2 = sift.detectAndCompute(gray_2, None)
+
+    # drawKeypoints(img_1, img_2, gray_1, gray_2, kp_1, kp_2)
 
     # find matches
     bf = cv2.BFMatcher()
@@ -213,6 +232,8 @@ def align_sift_homo(img_1, img_2):
         if m.distance < RATIO_ROBUSTNESS*n.distance:
             good.append([m])
             good1.append(m)
+
+    print("length of matched points:", len(good))
 
     # draw matches
     h, w, _ = img_2.shape
@@ -256,13 +277,15 @@ def enhance(img):
     # [0,-1,0],[-1,5,-1],[0,-1,0]
     binaryinv = cv2.adaptiveThreshold(dst, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 11, 5)
 
-    return binary, binaryinv
+    return binary
 
 if __name__ == '__main__':
     # read images
     img_1 = cv2.imread("input.png", cv2.IMREAD_COLOR)
+    h, w, _ = img_1.shape
+    print("h: ", h, ", w: ", w)
 
-    pages = convert_from_path('reference.pdf', size=(805,876))
+    pages = convert_from_path('reference.pdf', size=(w,h))
     for page in pages:
         page.save('reference.png', 'PNG')
 
@@ -270,23 +293,22 @@ if __name__ == '__main__':
     img_2 = cv2.imread("reference.png", cv2.IMREAD_COLOR)
 
     # orb features
-    result1 = align_orb_homo(img_1, img_2)
+    result_orb = align_orb_homo(img_1, img_2)
     # save image
-    cv2.imwrite("output/output_sift.png", result1)
+    cv2.imwrite("output/output_orb.png", result_orb)
 
     # sift features
-    result1 = align_sift_homo(img_1, img_2)
+    result_sift = align_sift_homo(img_1, img_2)
     # save image
-    cv2.imwrite("output/output_orb.png", result1)
+    cv2.imwrite("output/output_sift.png", result_sift)
 
-    # burforce
+    # sift features
     result2 = align_my_homo(img_1, img_2)
     # save image
     cv2.imwrite("output/output1.png", result2)
 
-    binary, binaryinv= enhance(result2)
+    binary = enhance(result2)
     cv2.imwrite("output/output1_binary.png", binary)
-    cv2.imwrite("output/output1_binaryinv.png", binaryinv)
 
-    with open("output/output.pdf","wb") as f:
+    with open("output/output1.pdf","wb") as f:
 	    f.write(img2pdf.convert('output/output1.png'))
