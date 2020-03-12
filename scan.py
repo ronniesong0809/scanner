@@ -272,12 +272,16 @@ def align_my_homo(img_1, img_2):
 
 def enhance(img):
     dst = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    blured = cv2. GaussianBlur(dst, (5, 5), 0)
+    cv2.imwrite("output/output1_blured.png", blured)
 
-    binary = cv2.adaptiveThreshold(dst, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 5)
-    # [0,-1,0],[-1,5,-1],[0,-1,0]
-    binaryinv = cv2.adaptiveThreshold(dst, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 11, 5)
+    # kernel = np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])
+    kernel = np.array([[-1,-1,-1],[-1,9,-1],[-1,-1,-1]])
+    sharpened = cv2.filter2D(blured, -1, kernel)
+    cv2.imwrite("output/output1_sharpened.png", sharpened)
 
-    return binary
+    result = cv2.adaptiveThreshold(dst, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 5)
+    return result
 
 if __name__ == '__main__':
     # read images
@@ -311,4 +315,4 @@ if __name__ == '__main__':
     cv2.imwrite("output/output1_binary.png", binary)
 
     with open("output/output1.pdf","wb") as f:
-	    f.write(img2pdf.convert('output/output1.png'))
+	    f.write(img2pdf.convert('output/output1_sharpened.png'))
