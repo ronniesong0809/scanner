@@ -154,8 +154,8 @@ def drawKeypoints(img_1, img_2, gray_1, gray_2, kp_1, kp_2):
     kp_sift_1 = cv2.drawKeypoints(gray_1, kp_1, img_1)
     kp_sift_2 = cv2.drawKeypoints(gray_2, kp_2, img_2)
 
-    cv2.imwrite("output/kp/kp_1.png", kp_sift_1)
-    cv2.imwrite("output/kp/kp_2.png", kp_sift_2)
+    cv2.imwrite("output/kp_1.png", kp_sift_1)
+    cv2.imwrite("output/kp_2.png", kp_sift_2)
 
 def align_orb_homo(img_1, img_2):
     print("\nextract ORB feature from input image and reference image")
@@ -273,12 +273,12 @@ def align_my_homo(img_1, img_2):
 def enhance(img):
     dst = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blured = cv2. GaussianBlur(dst, (5, 5), 0)
-    cv2.imwrite("output/output1_blured.png", blured)
+    cv2.imwrite("output/output_blured.png", blured)
 
     # kernel = np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])
     kernel = np.array([[-1,-1,-1],[-1,9,-1],[-1,-1,-1]])
     sharpened = cv2.filter2D(blured, -1, kernel)
-    cv2.imwrite("output/output1_sharpened.png", sharpened)
+    cv2.imwrite("output/output_sharpened.png", sharpened)
 
     result = cv2.adaptiveThreshold(dst, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 5)
     return result
@@ -291,28 +291,28 @@ if __name__ == '__main__':
 
     pages = convert_from_path('reference.pdf', size=(w,h))
     for page in pages:
-        page.save('reference.png', 'PNG')
+        page.save('output/reference.png', 'PNG')
 
     # align image basic on the reference
-    img_2 = cv2.imread("reference.png", cv2.IMREAD_COLOR)
+    img_2 = cv2.imread("output/reference.png", cv2.IMREAD_COLOR)
 
     # orb features
     result_orb = align_orb_homo(img_1, img_2)
     # save image
-    cv2.imwrite("output/output_orb.png", result_orb)
+    cv2.imwrite("output/features_orb.png", result_orb)
 
     # sift features
     result_sift = align_sift_homo(img_1, img_2)
     # save image
-    cv2.imwrite("output/output_sift.png", result_sift)
+    cv2.imwrite("output/features_sift.png", result_sift)
 
     # sift features
     result2 = align_my_homo(img_1, img_2)
     # save image
-    cv2.imwrite("output/output1.png", result2)
+    cv2.imwrite("output/output.png", result2)
 
     binary = enhance(result2)
-    cv2.imwrite("output/output1_binary.png", binary)
+    cv2.imwrite("output/output_binary.png", binary)
 
-    with open("output/output1.pdf","wb") as f:
-	    f.write(img2pdf.convert('output/output1_sharpened.png'))
+    with open("output/output.pdf","wb") as f:
+	    f.write(img2pdf.convert('output/output_sharpened.png'))
